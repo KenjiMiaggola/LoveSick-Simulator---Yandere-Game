@@ -2,37 +2,38 @@
 import React, { useState, useEffect } from 'react';
 
 type Language = 'EN' | 'IT';
+type AppView = 'MENU' | 'LOADING' | 'MESSAGE';
 
 const translations = {
   EN: {
     menuTitle: "LOVESICK",
     menuSub: "Akademi High Shadow Simulator",
     enterBtn: "ENTER THE SHADOWS",
-    protocol: "Yandere Protocol Active",
-    gameOverMsg: "Your heart broke before it could even beat.",
-    devMsg: "The game is in development",
-    backBtn: "Back to menu",
-    gameOverText: "GAMEOVER",
+    protocol: "ALPHA",
+    loadingText: "Synchronizing Heartbeat...",
+    devMsg: "The game is in development. Thank you for testing the protocol.",
+    unauthorizedMsg: "Access is not authorized for users",
+    backBtn: "Return to Menu",
     rotateMsg: "Please rotate your device to landscape mode"
   },
   IT: {
     menuTitle: "LOVESICK",
     menuSub: "Simulatore Ombra Akademi High",
     enterBtn: "ENTRA NELL'OMBRA",
-    protocol: "Protocollo Yandere Attivo",
-    gameOverMsg: "Il tuo cuore si è spezzato prima ancora di battere.",
-    devMsg: "Il gioco è in fase di sviluppo",
-    backBtn: "Torna al menù",
-    gameOverText: "GAMEOVER",
+    protocol: "ALPHA",
+    loadingText: "Sincronizzazione Battito...",
+    devMsg: "Il gioco è in fase di sviluppo. Grazie per aver testato il protocollo.",
+    unauthorizedMsg: "L'accesso non è autorizzato per gli utenti",
+    backBtn: "Torna al Menù",
     rotateMsg: "Ruota il dispositivo in modalità orizzontale"
   }
 };
 
 const App: React.FC = () => {
-  const [isGameOver, setIsGameOver] = useState(false);
+  const [view, setView] = useState<AppView>('MENU');
   const [lang, setLang] = useState<Language>('EN');
   const [isPortrait, setIsPortrait] = useState(false);
-
+  
   const t = translations[lang];
 
   useEffect(() => {
@@ -45,7 +46,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', checkOrientation);
   }, []);
 
-  const triggerGameOver = () => {
+  const startLoading = () => {
     const bloodOverlay = document.getElementById('blood-overlay');
     if (bloodOverlay) {
       bloodOverlay.classList.add('blood-active');
@@ -55,9 +56,18 @@ const App: React.FC = () => {
     }
     
     setTimeout(() => {
-      setIsGameOver(true);
+      setView('LOADING');
     }, 300);
   };
+
+  useEffect(() => {
+    if (view === 'LOADING') {
+      const timer = setTimeout(() => {
+        setView('MESSAGE');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [view]);
 
   const LanguageSwitcher = () => (
     <div className="absolute top-2 right-2 sm:top-6 sm:right-6 z-50 flex gap-2">
@@ -90,62 +100,55 @@ const App: React.FC = () => {
         <h2 className="anime-font text-xl text-rose-500 uppercase tracking-widest leading-relaxed">
           {t.rotateMsg}
         </h2>
-        <div className="mt-6 w-16 h-1 bg-rose-900/30 rounded-full overflow-hidden">
-          <div className="h-full bg-rose-600 w-1/2 animate-[shimmer_2s_infinite]"></div>
-        </div>
-        <style>{`
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(200%); }
-          }
-        `}</style>
       </div>
     );
   }
 
-  if (isGameOver) {
+  if (view === 'LOADING') {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black text-white p-2 text-center select-none overflow-hidden relative">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-zinc-950 text-white p-4 text-center select-none overflow-hidden relative">
+        <div className="relative flex flex-col items-center">
+          {/* Spinner personalizzato in stile Lovesick */}
+          <div className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-rose-900/30 border-t-rose-600 rounded-full animate-spin mb-8 shadow-[0_0_20px_rgba(225,29,72,0.2)]"></div>
+          
+          <div className="anime-font text-2xl sm:text-4xl text-rose-500 tracking-widest animate-pulse uppercase">
+            {t.loadingText}
+          </div>
+          
+          <div className="mt-4 flex gap-1">
+            <div className="w-2 h-2 bg-rose-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-2 h-2 bg-rose-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-2 h-2 bg-rose-600 rounded-full animate-bounce"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'MESSAGE') {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black text-white p-4 text-center select-none overflow-hidden relative">
         <LanguageSwitcher />
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none"></div>
-        
-        <div className="shattered-heart animate-bounce mb-1 sm:mb-4">
-          <i className="fa-solid fa-heart-crack text-[8vh] sm:text-8xl text-rose-800 drop-shadow-[0_0_20px_rgba(159,18,57,0.8)]"></i>
+        <div className="max-w-2xl animate-in fade-in zoom-in duration-700">
+          <i className="fa-solid fa-heart text-5xl sm:text-7xl text-rose-600 mb-8 drop-shadow-[0_0_15px_rgba(225,29,72,0.5)]"></i>
+          <h2 className="anime-font text-3xl sm:text-5xl text-white mb-6 uppercase tracking-tighter">
+            System Ready
+          </h2>
+          <div className="mb-12 space-y-2">
+            <p className="text-xl sm:text-2xl font-light text-rose-200/70 italic px-6">
+              {t.devMsg}
+            </p>
+            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-rose-900/60">
+              {t.unauthorizedMsg}
+            </p>
+          </div>
+          <button 
+            onClick={() => setView('MENU')}
+            className="px-10 py-4 border border-rose-600 text-rose-500 rounded-full font-black text-sm uppercase hover:bg-rose-600 hover:text-white transition-all tracking-widest active:scale-95 touch-manipulation"
+          >
+            {t.backBtn}
+          </button>
         </div>
-
-        <h1 className="anime-font text-[12vh] sm:text-[8rem] heartbroken-text mb-1 sm:mb-4 tracking-tighter leading-none flex flex-wrap justify-center items-center">
-          {t.gameOverText.split("").map((char, i) => (
-            <span 
-              key={i} 
-              className="heartbroken-letter px-0.5" 
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              {char}
-            </span>
-          ))}
-        </h1>
-
-        <div className="space-y-1 sm:space-y-4 animate-in fade-in slide-in-from-bottom duration-1000 delay-500 max-w-2xl px-4">
-          <p className="text-[3vh] sm:text-xl font-light text-rose-200/50 italic tracking-widest uppercase">
-            {t.gameOverMsg}
-          </p>
-          
-          <div className="h-px w-24 sm:w-64 bg-gradient-to-r from-transparent via-rose-900 to-transparent mx-auto"></div>
-          
-          <p className="text-[2.5vh] sm:text-lg font-bold text-white tracking-[0.2em] uppercase opacity-80 animate-pulse">
-            {t.devMsg}
-          </p>
-        </div>
-
-        <button 
-          onClick={() => setIsGameOver(false)}
-          className="mt-4 sm:mt-8 px-8 py-3 border border-rose-900/50 text-rose-500 rounded-full font-black text-[2.5vh] sm:text-xs uppercase hover:bg-rose-950 hover:text-rose-400 transition-all tracking-widest active:scale-95 touch-manipulation min-h-[44px]"
-        >
-          {t.backBtn}
-        </button>
-
-        <div className="absolute top-0 left-0 w-full h-0.5 bg-red-600/30"></div>
-        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-red-600/30"></div>
       </div>
     );
   }
@@ -166,7 +169,7 @@ const App: React.FC = () => {
         </p>
         
         <button 
-          onClick={triggerGameOver}
+          onClick={startLoading}
           className="group relative px-12 py-5 sm:px-20 sm:py-8 bg-rose-600 rounded-full font-black text-[3vh] sm:text-2xl hover:bg-rose-500 transition-all shadow-xl shadow-rose-900/40 overflow-hidden active:scale-95 touch-manipulation min-h-[60px]"
         >
           <span className="relative z-10">{t.enterBtn}</span>
@@ -176,6 +179,10 @@ const App: React.FC = () => {
 
       <div className="absolute bottom-2 left-4 sm:bottom-10 sm:left-10 opacity-30 text-[1.5vh] sm:text-[10px] font-black uppercase tracking-widest text-rose-500 pointer-events-none">
         {t.protocol}
+      </div>
+
+      <div className="absolute bottom-2 right-4 sm:bottom-10 sm:right-10 opacity-30 text-[1.5vh] sm:text-[10px] font-black uppercase tracking-widest text-rose-500 pointer-events-none">
+        KStudio
       </div>
     </div>
   );
